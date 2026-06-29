@@ -1,23 +1,41 @@
-/** Here it is, the long-awaited release!
- * Beat 12 levels!
- * Fight bosses!
- * Die a lot of times because this game is pretty hard!
+/** My brother wanted me to do this so I did
  * 
- * Controls:
- * Arrow keys or WAD: Move
- * Space: Speed up cutscenes
- * Shift+space+S: Save
- * I: Activate easy mode. (You can't toggle this off unless you restart, so only use if you're stuck)
+ * Changes from the original:
+ * Level timer
+ * Fireballs are now more fair
+ * The dialogue on level 5 is pretty much entirely skipped
+ * All boss dialogue is sped up automatically
  * 
- * Also, there is a (kinda bad) mobile mode. It should activate automatically if you're on mobile. If not, try switching browsers.
+ * Yeah, that's literally it :P
  * 
- * This game is very hard. Every level is possible, but I'd like to see anyone come close to beating this deathless.
+ * I might add IL timers and replays
  * 
- * If you do manage to beat it, please tell me! (Also include your save code)
+ * 
+ * Categories and sub-categories:
+ * Glitchless/Glitched
+ * No Save&Load/Save&Load/Segmented
+ * Normal/Easy
+ * Normal ending/True ending
+ * 
+ * With the exclusion of glitchless, the first sub-category is implied (For instance Glitchless Easy is just Glitchless No Save&Load Easy Normal ending but shorter)
+ * 
+ * 
+ * My times:
+ * 9:32.233 Glitchless Easy
+ * 14:38.949 Glitchless
+ * 22:39.566 Glitchless True Ending
+ * 7:03.233 Glitched Segmented
+ * 
 **/
 
 // Place save code here. Press shift+space+S at any time to save.
 var saveCode;
+
+
+var replay = []; // WIP
+
+var level = 1; // Change this for IL runs
+
 
 
 
@@ -37,7 +55,20 @@ var saveCode;
 
 // Enjoy 2000+ lines of barely commented code :)
 
+var randomCharacterSeed = random(99999999);
 
+var newReplay = [];
+var gameTime = 0;
+var replayLvl = 0;
+
+
+
+var minutes = saveCode ? (saveCode.length > 22 ? saveCode[23] : 0) : 0;
+var seconds = saveCode ? (saveCode.length > 22 ? saveCode[24] : 0) : 0;
+var milliseconds = saveCode ? (saveCode.length > 22 ? saveCode[25] : 0) : 0;
+var levelMinutes = 0;
+var levelSeconds = 0;
+var levelMilliseconds = 0;
 
 
 
@@ -50,7 +81,7 @@ if (width === 400 && height === 400) {
 }
 
 noStroke(); // No noStroke would mean no Electric Dolphin on KA
-size(1920, 1080, 1); // Fix the infamous "Small screen" bug
+size(600, 600, 1); // Fix the infamous "Small screen" bug
 
 textAlign(CENTER, CENTER);
 
@@ -87,7 +118,7 @@ var delag = false;
 var debugg = false;
 var noclip = false;
 var easy = false;
-var bossX = 0;
+var bossX = level - 1;
 var mobile = mobile || false;
 
 background(255, 0);
@@ -192,7 +223,6 @@ for (var i in classicCharacter) {
 		classicCharacter[i] = Object.assign({}, character[i]);
 	}
 }
-var randomCharacterSeed = random(99999999);
 
 
 if (saveCode) {
@@ -270,7 +300,7 @@ var levelInfo = [
 		name: "Circle forest",
 	},
 	{
-		end: 10000,
+		end: 2000,
 		bg: color(80, 100, 180),
 		name: "Hidden help"
 	},
@@ -1029,12 +1059,30 @@ var saveCodes = [
 ];
 
 randomSeed(1);
+var lvlCodes = [
+    "Q+IR&0,kw$;YSD.e7d",
+    "^=Sg+OPHHJ)k5~",
+    "F$R+Iz_M^XR",
+    "RX<yDIs^ProYU@J4",
+    "SP]eILxkeNw'j",
+    "]60T1>U9~Z!NAC+/o",
+    "ry>bVbMF}.)y",
+    "ZC$h%W(f++AbzP%",
+    "8f_d9@<k7`$_.",
+    "y>c];:PP.T2",
+    "XuOfv]x'8_t}~bt",
+    "|#$L--s_qal_E6",
+    ">8y1.ZJTkyf}",
+    "Ed^GHtH[>E8_",
+    "7M$Sg6YKg]BgV%%>",
+];
 var chars = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890`-=[];',./~!@#$%^&*()_+{}|:<>?";
 for (var i = 0; i < 15; i ++) {
     var tmp = "";
     for (var j = 0; j < random(10, 20); j ++) {
         tmp += chars[floor(random(chars.length))];
     }
+    tmp = lvlCodes[i];
     saveCodes[i] = tmp;
     if (saveCode) { // Prevent the program from crashing without a save code
         if (saveCode[0] === tmp) {
@@ -1084,6 +1132,11 @@ var button = function(x, y, sz, txt, s, col, txtCol) {
 		ellipse(x, y, sz, sz);
 		if (click) {
 			scene = s;
+			if (!saveCode) {
+                minutes = 0;
+                seconds = 0;
+                milliseconds = 0;
+			}
 		}
 	}
 };
@@ -1177,10 +1230,13 @@ var secretDialogue = [
 		"I have found a way to project myself to other universes, but only for a short amount of time.",
 		"The only way to escape my universe is by gathering universe cores.",],
 		["Once I have enough, I will escape...",
-		"And then I'll take over your \"real world\"!",],
+		"And then I'll take over KA!",],
+        ["\"What's KA? Why are you taking it over?\"",
+        "The circle must be confused, but I'm sure you aren't.",
+        "Yes, you. Person that's controlling the circle."
+        ],
         ["With both CircLand and the Rectangle Kingdom gone, it should've been easy to destroy this universe.",
         "But then you decided to get in my way."],
-        [],
         [],
 		["Wow, you're quite persistant, aren't you?",
 		"Here's some circles. Have a nice break.",
@@ -1210,20 +1266,15 @@ var secretDialogue = [
         "I almost felt bad making him attack CircLand.",
         "I almost felt bad trying to destroy everything he's done.",
         "But I guess you got your happy ending.",
-        "...",
-        "So, would you mind going back and getting the normal ending?",
-        "I really need a universe core.",
-        "...",
-        "Either way, see ya in the next game!",
+        "And at least I got a universe core from the first time you died.",
+        "So, see ya in the next game!",
         "I'm sure we'll have a very... fun time.",
     ],
     [
         "You beat me but...",
         "You... Haven't died?",
         "Not even once???",
-        "Either you're hacking, or this is your millionth time getting here.",
-        "...So, can you just get the normal ending, just this once?",
-        "...",
+        "HOW AM I SUPPOSED TO GET A UNIVERSE CORE IF YOU'RE STILL IN MY WAY?!?!",
         "Fine. I'll just find some other player to get a universe core from.",
         "Someone who actually does what they're told.",
         "This is just a game after all.",
@@ -1272,7 +1323,7 @@ var easyDialogue = [
         [],
 		["Wait!!!!!",
 		"DO NOT GO ONTO THOSE CIRCLES. I'll die instantly.",
-		"Oh, your name is \"I\".",],
+		"Oh, your name is \"I\". Maybe.",],
 		["You didn't fall for it?",
 		"Hmmm.....",
 		"Well then...",
@@ -1414,63 +1465,8 @@ keyPressed = function() {
                 tmpStr += character[i];
             }
         }
-        println("var saveCode = [\"" + saveCodes[bossX] + "\"" + tmpStr + ", " + secretDead + "];");
+        println("var saveCode = [\"" + saveCodes[bossX] + "\"" + tmpStr + ", " + secretDead + ", " + minutes + ", " + seconds + ", " + milliseconds + "];");
     }
-	if (keys[32] && keys[16] && keys[76]) {
-		try {
-			var saveCodeString = prompt("Enter your save code");
-			keys[32] = keys[16] = keys[76] = false;
-			if (saveCodeString) {	
-				var openingIndex = saveCodeString.indexOf("[");
-				var closingIndex = saveCodeString.indexOf("];") + 1;
-				var saveCodeObjectStr = ("{\"arr\": " + saveCodeString.substring(openingIndex, closingIndex) + "}").replaceAll(",]", "]");
-				saveCode = JSON.parse(saveCodeObjectStr).arr;
-				scene = "menu";
-				for (var i = 0; i < saveCodes.length; i ++) {
-					if (saveCode[0] === saveCodes[i]) {
-						bossX = i;
-						pX = 200;
-						pY = 200;
-						xVel = 0;
-						yVel = 0;
-						introTime = 500;
-						circles = [];
-						rects = [];
-						lRects = [];
-						for (var j in circArray[bossX]) {
-							var circ = circArray[bossX][j];
-							circles.push(new circle(circ[0], circ[1], circ[2], circ[3], circ[4]));
-						}
-						
-						for (var j in rectArray[bossX]) {
-							var rec = rectArray[bossX][j];
-							rects.push(new rectangle(rec[0], rec[1], rec[2], rec[3], rec[4], rec[5]));
-						}
-						
-						for (var j in lRectArray[bossX]) {
-							var rec = lRectArray[bossX][j];
-							lRects.push(new lRect(rec[0], rec[1], rec[2], rec[3], rec[4], rec[5], rec[6], rec[7], rec[8]));
-						}
-						fireballs = [];
-						particles = [];
-						cutsceneVar = 0;
-						cutscene = 0;
-						cutsceneX = 0;
-						cutsceneY = 0;
-					}
-				}
-				if (saveCode) {
-					var a = 1;
-					for (var i in character) {
-						character[i] = saveCode[a];
-						a ++;
-					}
-				}
-			}
-		} catch (e) {
-			println(e)
-		}
-	}
     if (keyCode === 73) {
         easy = true;
         secretDialogue = easyDialogue;
@@ -1731,8 +1727,8 @@ draw = function() {
 			        character[i.substr(0, i.length - 1) + (i.substr(i.length - 1) === "x" ? "y" : "Y")] = sin(rot) * random(5);
 			    }
 			    if (i.includes("Col") && !i.includes("Hsb")) {
-			        character[i] = color(~~random(255), ~~random(255), ~~random(255));
-			        character[i + "Hsb"] = [~~hue(character[i]), ~~saturation(character[i]), ~~brightness(character[i])];
+			        character[i] = color(random(255), random(255), random(255));
+			        character[i + "Hsb"] = [hue(character[i]), saturation(character[i]), brightness(character[i])];
 			    }
 			}
 			scene = "customize";
@@ -1763,6 +1759,7 @@ draw = function() {
 		}
 	}
 	if (scene === "game") {
+        
 		if (bossX === 0) {
 			background(lerpColor(color(255), color(255, 0, 0), constrain((pX - 5650)/3, 0, 255)/255));
 		} else {
@@ -2063,7 +2060,7 @@ draw = function() {
                     fill(0);
                     triangle(pX + 175, pY - 100, pX + 275, pY - 100, pX + 175, pY - 10);
                 }
-                if (keys[32]) {
+                if (true) {
                     cutsceneVar += 4;
                 }
             }
@@ -2272,7 +2269,7 @@ draw = function() {
                 text("Well. Guess it's time for the big reveal.", 10800, 100);
                 
             }
-            if (cutscene !== 14 && keys[32] && cutscene > 1) {
+            if (cutscene !== 14 && true && cutscene > 1) {
                 cutsceneVar += 4;
             }
         }
@@ -2485,7 +2482,7 @@ draw = function() {
 			fill(0, 150);
 			ellipse(0, 0, 60, 60);
 			if (frameCount % (easy ? 360 : 180) === 0 && pX > 1150 && bossX === 7 || frameCount % (easy ? 120 : 60) === 0 && pX > 1700 && bossX === 8 || frameCount % (easy ? 180 : 90) === 0 && pX > 300 && bossX === 9 || frameCount % (easy ? 90 : 45) === 0 && pX > 300 && bossX === 10) {
-				fireballs.push(new fireball(pX + 600, random(pY - 250, pY + 250)));
+				fireballs.push(new fireball(pX + 600, random(pY - 250, pY + 250) - yVel*25));
 			}
 		}
         if (bossX === 11 && cutscene === 14 && frameCount % (fireballRate * (easy ? 2 : 1)) === 0) {
@@ -2714,6 +2711,7 @@ draw = function() {
 		}
 		
 		collided = false;
+		
 	}
 	if (scene === "transition") {
 		image(transitionImg, 0, 0);
@@ -2732,6 +2730,9 @@ draw = function() {
 			transitionTime = 0;
             cutsceneVar = 0;
 			scene = "game";
+			levelMilliseconds = 0;
+            levelSeconds = 0;
+            levelMinutes = 0;
 			fireballs = [];
 			particles = [];
             bossDeaths = 0;
@@ -2891,6 +2892,29 @@ draw = function() {
         println("It seems you've made a spin-off, but the screen size is invalid. Go into settings and change the size to 600x600.");
         noLoop();
     }
+    
+    
+    var timeTxt = floor(minutes) + ":" + (floor(seconds) % 60 < 10 ? 0 : "") + floor(seconds) % 60 + "." + (floor(milliseconds) % 1000 < 100 ? 0 : "") + (floor(milliseconds) % 1000 < 10 ? 0 : "") + (floor(milliseconds) % 1000);
+    fill(0, 100);
+    ellipse(0, 0, 200, 200);
+    fill(255);
+	textSize(20);
+	textAlign(LEFT, CENTER);
+	text(timeTxt, 10, 20);
+	textSize(15);
+	text(floor(levelMinutes) + ":" + (floor(levelSeconds) % 60 < 10 ? 0 : "") + floor(levelSeconds) % 60 + "." + (floor(levelMilliseconds) % 1000 < 100 ? 0 : "") + (floor(levelMilliseconds) % 1000 < 10 ? 0 : "") + (floor(levelMilliseconds) % 1000), 10, 40);
+	textAlign(CENTER, CENTER);
+	
+	if (scene !== "menu" && scene !== "customize") {
+	    milliseconds += 1000/60;
+        seconds += 1/60;
+        minutes += 1/3600;
+        if (scene === "game" || scene === "die") {
+            levelMilliseconds += 1000/60;
+            levelSeconds += 1/60;
+            levelMinutes += 1/3600;
+        }
+	}
 	
 	
 };
@@ -2905,6 +2929,8 @@ try {
 } catch(e) {
     debug("Your browser doesn't support mobile mode.");
 }
+
+
 
 
 
