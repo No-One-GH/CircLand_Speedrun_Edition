@@ -50,7 +50,7 @@ if (width === 400 && height === 400) {
 }
 
 noStroke(); // No noStroke would mean no Electric Dolphin on KA
-size(600, 600, 1); // Fix the infamous "Small screen" bug
+size(1920, 1080, 1); // Fix the infamous "Small screen" bug
 
 textAlign(CENTER, CENTER);
 
